@@ -1,22 +1,20 @@
 //importing the required packages
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const Sequlize = require("sequelize");
+
+//importing the database connection
+const db = require("../../config/db");
 
 //defining the company employee schema
-const depSchema = new Schema(
+const depSchema = db.define(
+  "Emp_department",
   {
     dep_name: {
-      type: String,
-      required: [true, "Please provide department name"],
-      trim: true
+      type: Sequlize.TEXT
     },
     number_of_emp: {
-      type: Number,
-      required: true,
-      trim: true
+      type: Sequlize.SMALLINT
     }
   },
-  { timestamps: true }
+  { tableName: "Emp_department" }
 );
-//exporting the schema
-module.exports = mongoose.model("dep", depSchema);
+module.exports = depSchema;

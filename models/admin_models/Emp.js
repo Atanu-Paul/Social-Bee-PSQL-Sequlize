@@ -1,51 +1,68 @@
-//importing the required packages
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+// //importing the required packages
+const { Sequlize, DataTypes } = require("sequelize");
+const bcrypt = require("bcryptjs");
+// const jwt = require("jsonwebtoken");
+
+//importing the database connection
+const db = require("../../config/db");
 
 //defining the company employee schema
-const empSchema = new Schema(
+const empSchema = db.define(
+  "Emps",
   {
     //emp_number is not same as emp Object Id it is the 6 digit number given by the company
     emp_number: {
-      type: Number,
-      required: [true, "Please provide the employee number"],
-      trim: true,
-      unique: true
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      unique: true,
+      msg: "Please enter Employee Number"
     },
     emp_name: {
-      type: String,
-      required: [true, "Please provide name"],
-      trim: true
+      type: DataTypes.TEXT,
+      allowNull: false,
+      msg: "Please enter name"
     },
     emp_email: {
-      type: String,
-      match: [
-        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        "Please add a valid email"
-      ],
-      required: [true, "Please provide email"],
-      trim: true,
-      unique: true
+      type: DataTypes.TEXT,
+      allowNull: false,
+      is: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+      isEmail: true,
+      msg: "Email formate not correct"
     },
     emp_password: {
-      type: String,
-      required: [true, "Please provide password"],
-      trim: true
+      type: DataTypes.TEXT,
+      allowNull: false,
+      is: /^[0-9a-f]{64}$/i,
+      msg: "Password in wrong formate or not given"
     },
     emp_access_lvl: {
-      type: Number,
-      required: [true, "Enter access level number from 1-5"],
-      maxlength: 1,
-      trim: true
+      type: DataTypes.SMALLINT,
+      allowNull: false,
+      msg: "Acess level must be given between 1-5"
     },
     emp_desgination: {
-      type: String,
-      required: [true, "Please provide designation"],
-      trim: true
+      type: DataTypes.TEXT,
+      allowNull: false,
+      msg: "Enter employee Designation"
     },
-    dep_id: [{ type: Schema.Types.ObjectId, ref: "dep" }]
+    dep_id: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: "Emp_department",
+        key: "id"
+      }
+    }
   },
-  { timestamps: true }
+  { timestamps: true },
+  { tableName: "Emps" }
 );
+//hashing the password before saving in the databse
+empSchema.beforeCreate(async function(empSchema) {
+  const salt = await bcrypt.genSalt(10);
+  empSchema.emp_password = await bcrypt.hash(empSchema.emp_password, salt);
+});
+empSchema.prototype.validPassword = async function(emp_password) {
+  return await bcrypt.compare(emp_password, this.emp_password);
+};
 //exporting the schema
-module.exports = mongoose.model("emp", empSchema);
+module.exports = empSchema;
