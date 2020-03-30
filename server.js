@@ -16,16 +16,13 @@ const errorHandler = require("./middlewares/error_handler");
 const admin = require("./routes/AdminRoutes/adminRoutes");
 
 //importing the DB connection localhost/Atlas in the server file
-const connectDB = require("./config/db");
+require("./config/db");
 
 //load env variables
 dotenv.config({ path: "./config/config.env" });
 
 //declaring the port variable
 const PORT = process.env.PORT || 8080;
-
-//call to DB
-connectDB();
 
 //initillizaing the express module
 const app = express();

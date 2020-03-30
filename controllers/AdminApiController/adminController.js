@@ -1,6 +1,3 @@
-//importing the database connection
-require("../../config/db");
-
 //importing the custom error response module
 const ErrorResponse = require("../../utils/error_response");
 
@@ -27,8 +24,7 @@ empController.defAdmin = (req, res, next) => {
 //@route    POST /api/v1/admin/add/department
 //@access   public
 empController.addDep = asyncHandler(async (req, res, next) => {
-  let depData = new EmpDepartment(req.body);
-  await depData.save();
+  let depData = await EmpDepartment.create(req.body);
   res.status(201).json({ success: "Department data added", depData: depData });
 });
 
@@ -36,7 +32,7 @@ empController.addDep = asyncHandler(async (req, res, next) => {
 //@route    GET /api/v1/admin/show/department
 //@access   private
 empController.showDep = asyncHandler(async (req, res, next) => {
-  let showDep = await EmpDepartment.find();
+  let showDep = await EmpDepartment.findAndCountAll();
   res.status(200).json({
     success: "All Department",
     count: showDep.length,
@@ -48,7 +44,7 @@ empController.showDep = asyncHandler(async (req, res, next) => {
 //@route    GET /api/v1/admin/show/department/:id
 //@access   private
 empController.showOneDep = asyncHandler(async (req, res, next) => {
-  let showOneDep = await EmpDepartment.findById(req.params.id);
+  let showOneDep = await EmpDepartment.findByPk(req.params.id);
   if (!showOneDep) {
     //if condition to check if id exsists or not the database
     return next(
@@ -67,14 +63,9 @@ empController.showOneDep = asyncHandler(async (req, res, next) => {
 //@route    PUT /api/v1/admin/update/department/:id
 //@access   private
 empController.updateEmp_Dep = asyncHandler(async (req, res, next) => {
-  let updateEmp_Dep = await EmpDepartment.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    {
-      new: true,
-      runValidators: true
-    }
-  );
+  let updateEmp_Dep = await EmpDepartment.update(req.body, {
+    where: { id: req.params.id }
+  });
   if (!updateEmp_Dep) {
     //if condition to check if id exsists or not the database
     return next(
@@ -94,7 +85,7 @@ empController.updateEmp_Dep = asyncHandler(async (req, res, next) => {
 //@route    DELETE /api/v1/admin/delete/department/:id
 //@access   private
 empController.deleteDep = asyncHandler(async (req, res, next) => {
-  let deleteDep = await EmpDepartment.findByIdAndDelete(req.params.id);
+  let deleteDep = await EmpDepartment.destroy({ where: { id: req.params.id } });
   if (!deleteDep) {
     //if condition to check if id exsists or not the database
     return next(
@@ -114,8 +105,7 @@ empController.deleteDep = asyncHandler(async (req, res, next) => {
 //@route    POST /api/v1/admin/signup
 //@access   public
 empController.signup = asyncHandler(async (req, res, next) => {
-  let empData = new Employee(req.body);
-  await empData.save();
+  let empData = await Employee.create(req.body);
   res.status(201).json({ success: "Employee data added", empData: empData });
 });
 
@@ -123,10 +113,9 @@ empController.signup = asyncHandler(async (req, res, next) => {
 //@route    POST /api/v1/admin/show/employee
 //@access   private
 empController.showAllEmp = asyncHandler(async (req, res, next) => {
-  let showAllEmp = await Employee.find();
+  let showAllEmp = await Employee.findAndCountAll();
   res.status(200).json({
     success: "All Employee data",
-    count: showAllEmp.length,
     showAllEmp: showAllEmp
   });
 });
@@ -135,7 +124,7 @@ empController.showAllEmp = asyncHandler(async (req, res, next) => {
 //@route    POST /api/v1/admin/show/employee/:id
 //@access   private
 empController.showOneEmp = asyncHandler(async (req, res, next) => {
-  let showOneEmp = await Employee.findById(req.params.id);
+  let showOneEmp = await Employee.findByPk(req.params.id);
   if (!showOneEmp) {
     //if condition to check if id exsists or not the database
     return next(
@@ -154,9 +143,8 @@ empController.showOneEmp = asyncHandler(async (req, res, next) => {
 //@route    PUT /api/v1/admin/update/employee/:id
 //@access   private
 empController.updateEmp = asyncHandler(async (req, res, next) => {
-  let updateEmp = await Employee.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true
+  let updateEmp = await Employee.update(req.body, {
+    where: { id: req.params.id }
   });
   if (!updateEmp) {
     //if condition to check if id exsists or not the database
@@ -176,7 +164,7 @@ empController.updateEmp = asyncHandler(async (req, res, next) => {
 //@route    DELETE /api/v1/admin/delete/employee/:id
 //@access   private
 empController.deleteEmp = asyncHandler(async (req, res, next) => {
-  let deleteEmp = await Employee.findByIdAndDelete(req.params.id);
+  let deleteEmp = await Employee.destroy({ where: { id: req.params.id } });
   if (!deleteEmp) {
     //if condition to check if id exsists or not the database
     return next(
@@ -190,5 +178,6 @@ empController.deleteEmp = asyncHandler(async (req, res, next) => {
     .status(200)
     .json({ success: "Employee Information Deleted", deleteEmp: deleteEmp });
 });
+
 //exporting the module
 module.exports = empController;

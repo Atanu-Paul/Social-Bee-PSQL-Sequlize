@@ -1,4 +1,4 @@
-//importing all the packages
+// //importing all the packages
 const express = require("express");
 const adminRouter = express.Router();
 
@@ -39,8 +39,8 @@ adminRouter.route("/update/employee/:id").put(updateEmp);
 adminRouter.route("/update/department/:id").put(updateEmp_Dep);
 //deleting an employee data
 adminRouter.route("/delete/employee/:id").delete(deleteEmp);
-//deleting an department data
+// deleting an department data
 adminRouter.route("/delete/department/:id").delete(deleteDep);
 
-//exporting the router module
+// //exporting the router module
 module.exports = adminRouter;

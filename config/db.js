@@ -1,37 +1,29 @@
-//mongo atlas connection configaration settings
-const mongoose = require("mongoose");
+//importing the sequlize orm
+const { Sequelize } = require("sequelize");
+require("colors");
 
-// const connectDB = async () => {
-//   try {
-//     const conn = await mongoose.connect(process.env.MONGO_URI, {
-//       useNewUrlParser: true,
-//       useUnifiedTopology: true,
-//       useCreateIndex: true,
-//       useFindAndModify: true
-//     });
-//     console.log(`MongoDB is up @ MongoAtlas :${conn.connection.host}`.green.underline.bold);
-//   } catch (error) {
-//     console.error(error);
-//     process.exit(1);
-//   }
-// };
+//connecting the app with the postgres sql instance hosted on aws with the elephannt sql platform
 
-//Local connection -MongoDB-Compass
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_LOCAL_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      useCreateIndex: true,
-      useFindAndModify: true
-    });
-    console.log(
-      `MongoDB is up @ mongoLocal :${conn.connection.host}`.green.underline.bold
-    );
-  } catch (error) {
-    console.error(error,``.red);
-    process.exit(1);
+const connectDB = new Sequelize(
+  "cmanyyby",
+  "cmanyyby",
+  "L519qUGRhgac5oci8VNrmxK-qHD-guRJ",
+  {
+    host: "rosie.db.elephantsql.com",
+    dialect: "postgres"
   }
-};
-
+);
+connectDB
+  .authenticate()
+  .then(() => {
+    console.log(
+      "Postgres database has been connected sucessfully".green.underline
+    );
+  })
+  .catch(err => {
+    console.error(
+      "Connection failed Database not connected  error:".red.underline,
+      err
+    );
+  });
 module.exports = connectDB;
