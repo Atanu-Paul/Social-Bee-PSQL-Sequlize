@@ -9,12 +9,14 @@ const depSchema = db.define(
   "Emp_department",
   {
     dep_name: {
-      type: Sequlize.TEXT
+      type: Sequlize.TEXT,
+      msg: "Please enter Department Name",
     },
     number_of_emp: {
-      type: Sequlize.SMALLINT
-    }
+      type: Sequlize.SMALLINT,
+      msg: "Please enter Number of employee",
+    },
   },
-  { tableName: "Emp_department" }
+  { tableName: "emp_department" }
 );
 module.exports = depSchema;

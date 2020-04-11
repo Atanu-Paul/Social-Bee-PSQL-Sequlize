@@ -28,7 +28,7 @@ exports.AdminAuthProtect = asyncHandler(async (req, res, next) => {
     console.log(token);
 
     //req.user will have the details of a employee which shall be utilized by suceeding route-handler
-    req.user = await Employee.findById(token.id);
+    req.user = await Employee.findOne({ where: { id: token.id } });
     next();
   } catch (err) {
     return next(new ErrorResponse("Unauthorized Employee ACCESS DENIED!", 401));

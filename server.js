@@ -6,7 +6,6 @@ const dotenv = require("dotenv");
 const colors = require("colors");
 const coookieParser = require("cookie-parser");
 const fileupload = require("express-fileupload");
-const mongoSanitize = require("express-mongo-sanitize");
 const helmet = require("helmet");
 const xssClean = require("xss-clean");
 const ratelimt = require("express-rate-limit");
@@ -37,7 +36,7 @@ const admin = require("./routes/adminRoutes");
 const adminAuth = require("./routes/admin_auth_route");
 
 //importing User related routes
-// const user = require("./routes/user_Route");
+const user = require("./routes/user_Route");
 
 //importing the Ngo Related routes
 // const ngo = require("./routes/ngo_Routes");
@@ -60,9 +59,6 @@ app.use(express.urlencoded({ extended: false }));
 
 //file uploading middleware
 app.use(fileupload());
-
-//setting up the mongo-sanetize middleware to prevent NoSql injections and makeing the api hacker proof
-// app.use(mongoSanitize());
 
 //setting up the helmet middleware to add header security features
 // app.use(helmet());
@@ -88,7 +84,7 @@ app.use(logger);
 
 //mounting the route to a default path
 app.use("/api/v1/admin", admin, adminAuth);
-// app.use("/api/v1/user", user);
+app.use("/api/v1/user", user);
 // app.use("/api/v1/ngo", ngo);
 
 //setting up the custom error handler have to put it after the routes in order to let javascript catch it

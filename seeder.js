@@ -1,5 +1,5 @@
 const fs = require("fs");
-const mongoose = require("mongoose");
+const Sequelize = require("sequelize");
 const colors = require("colors");
 const dotenv = require("dotenv");
 
@@ -11,12 +11,7 @@ const ngoData = require("./models/ngo_models/ngoData");
 const emp_department = require("./models/admin_models/Emp_department");
 
 //bring up the database connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  useCreateIndex: true,
-  useFindAndModify: true
-});
+const sequelize = new Sequelize(process.env.ELEPHANT_SQL_URI);
 
 //Read the JSON Files
 const ngomockData = JSON.parse(
@@ -29,7 +24,8 @@ const emp_deparrtmentmockData = JSON.parse(
 //import into DB
 const importData = async () => {
   try {
-    await emp_department.create(emp_deparrtmentmockData);
+    await emp_department.bulkCreate(emp_deparrtmentmockData);
+    await ngoData.bulkCreate(ngomockData);
 
     console.log("DATA DUMPED IN DB".green.inverse);
     process.exit();
@@ -41,8 +37,8 @@ const importData = async () => {
 //TO delete all the data
 const deleteData = async () => {
   try {
-    await emp_department.deleteMany();
-
+    await emp_department.destroy({ where: {} });
+    await ngoData.destroy({ where: {} });
     console.log("DATA WIPED OUT FROM DB".red.inverse);
     process.exit();
   } catch (err) {

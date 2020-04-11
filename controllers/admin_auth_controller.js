@@ -62,8 +62,7 @@ empAuthController.signup = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse("Email could not be sent,Sorry", 500));
   }
 
-  let empData = new Employee(req.body);
-  await empData.save();
+  let empData = await Employee.create(req.body);
 
   res.status(201).json({
     success: "Employee Signed Up",
@@ -88,7 +87,7 @@ empAuthController.login = asyncHandler(async (req, res, next) => {
     );
   }
   //checking if the employee data is present
-  const empData = await Employee.findOne({ emp_email }).select("+emp_password");
+  const empData = await Employee.findOne({ where: { emp_email } });
 
   if (!empData) {
     return next(new ErrorResponse("Employee not registered", 401));
@@ -121,7 +120,7 @@ empAuthController.logout = asyncHandler(async (req, res, next) => {
 //@access   public
 empAuthController.ForgotPassword = asyncHandler(async (req, res, next) => {
   const { emp_email } = req.body;
-  const emp = await Employee.findOne({ emp_email });
+  const emp = await Employee.findOne({ where: { emp_email } });
 
   if (!emp) {
     //if condition to check if id exsists or not the database
@@ -134,7 +133,7 @@ empAuthController.ForgotPassword = asyncHandler(async (req, res, next) => {
   }
   //get reset token
   const resetToken = emp.getResetToken();
-  await emp.save({ validateBeforeSave: false });
+  await emp.save();
   //creating reset url
   const resetUrl = `${req.protocol}://${req.get(
     "host"
@@ -156,10 +155,10 @@ empAuthController.ForgotPassword = asyncHandler(async (req, res, next) => {
     });
   } catch (err) {
     console.log(err);
-    emp.resetPasswordToken = undefined;
-    emp.resetPasswordExpire = undefined;
+    emp.resetPasswordToken = null;
+    emp.resetPasswordExpire = null;
 
-    await emp.save({ validateBeforeSave: false });
+    await emp.save();
 
     return next(new ErrorResponse("Email could not be sent,Sorry", 500));
   }
@@ -176,9 +175,7 @@ empAuthController.resetPassword = asyncHandler(async (req, res, next) => {
     .digest("hex");
 
   const user = await Employee.findOne({
-    resetPasswordToken,
-    resetPasswordExpire: { $gt: Date.now() },
-  });
+    where: { resetPasswordToken} });
 
   if (!user) {
     return next(new ErrorResponse("Invalid token", 400));
@@ -186,8 +183,8 @@ empAuthController.resetPassword = asyncHandler(async (req, res, next) => {
 
   //Let's set a new password
   user.emp_password = req.body.emp_password;
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpire = undefined;
+  user.resetPasswordToken = null;
+  user.resetPasswordExpire = null;
   await user.save();
 
   sendToken(user, 200, res);

@@ -1,9 +1,10 @@
 const path = require("path");
+const crypto = require("crypto");
 const User = require("../models/user_models/user");
 const ErrorResponse = require("../utils/error_response");
 const asyncHandler = require("../middlewares/async_handler");
 const sendEmail = require("../utils/sendEmail");
-const crypto = require("crypto"); //this is a builtin in express ,need not add
+//this is a builtin in express ,need not add
 
 //@desc     Default admin route
 //@route    GET /api/v1/user
@@ -71,7 +72,7 @@ exports.login = asyncHandler(async (req, res, next) => {
   }
 
   // Check for user
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ where: { email } });
 
   if (!user) {
     return next(new ErrorResponse("Invalid credentials", 401));
@@ -91,11 +92,7 @@ exports.login = asyncHandler(async (req, res, next) => {
 // @route     POST /api/v1/auth/me
 // @access    Private
 exports.getMe = asyncHandler(async (req, res, next) => {
-  const user = await User.findById(req.user.id).populate({
-    path: "ngoOwned",
-    select: "ngoName ngoDescription ngoRegistrationNumber ngoFounded",
-  });
-
+  const user = await User.findByPk(req.user.id);
   res.status(200).json({
     success: true,
     data: user,
@@ -106,7 +103,7 @@ exports.getMe = asyncHandler(async (req, res, next) => {
 // @route     POST /api/v1/auth/forgotpassword
 // @access    Public
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
-  const user = await User.findOne({ email: req.body.email });
+  const user = await User.findOne({ where: { email: req.body.email } });
 
   if (!user) {
     return next(new ErrorResponse("There is no user with that email", 404));
@@ -116,12 +113,12 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   const resetToken = user.getResetPasswordToken();
   console.log(resetToken); //testing
 
-  await user.save({ validateBeforeSave: false });
+  await user.save();
 
   // Create reset url  http
   const resetUrl = `${req.protocol}://${req.get(
     "host"
-  )}/api/v1/auth/resetpassword/${resetToken}`;
+  )}/api/v1/user/resetpassword/${resetToken}`;
 
   const message = `You are receiving this email from SocialBee because you have requested the reset of a password. Copy paste the link in your broswer to reset your password: \n\n ${resetUrl}
   \n\n  Link will expire in next 10 minutes`;
@@ -137,10 +134,10 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
       .json({ success: true, data: "Email has been sent.Please check" });
   } catch (err) {
     console.log(err);
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpire = null;
 
-    await user.save({ validateBeforeSave: false });
+    await user.save();
 
     return next(new ErrorResponse("Email could not be sent,Sorry", 500));
   }
@@ -156,10 +153,7 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
     .update(req.params.resettoken)
     .digest("hex");
 
-  const user = await User.findOne({
-    resetPasswordToken,
-    // ,resetPasswordExpire: { $gt: Date.now() }
-  });
+  const user = await User.findOne({ where: { resetPasswordToken } });
 
   if (!user) {
     return next(new ErrorResponse("Invalid token", 400));
@@ -167,8 +161,8 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 
   //Let's set a new password
   user.password = req.body.password;
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpire = undefined;
+  user.resetPasswordToken = null;
+  user.resetPasswordExpire = null;
   await user.save();
 
   sendTokenResponse(user, 200, res);
@@ -178,7 +172,7 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 //@route    PUT /api/v1/auth/updatedprofilepic
 //@access   private
 exports.updateprofilepic = asyncHandler(async (req, res, next) => {
-  let user = await User.findById(req.user.id);
+  let user = await User.findByPk(req.user.id);
 
   //if condition to check if id exsists or not the database
   if (!user) {
@@ -216,7 +210,7 @@ exports.updateprofilepic = asyncHandler(async (req, res, next) => {
   }
 
   //creating a custom file name to stroe in databse so that nameing conflicts doesn't happen if 2 or more user upload the same image file.
-  file.name = `photo_${user._id}${path.parse(file.name).ext}`;
+  file.name = `photo_user_id_${user.id}${path.parse(file.name).ext}`;
 
   //uploading the file in the database
   file.mv(`${process.env.FILE_UPLOAD_PATH}/${file.name}`, async (err) => {
@@ -226,9 +220,10 @@ exports.updateprofilepic = asyncHandler(async (req, res, next) => {
         new ErrorResponse(`Server Error: File could not uploaded`, 500)
       );
     }
-    await User.findByIdAndUpdate(req.user.id, {
-      profilepic: `photos/${file.name}`,
-    });
+    await User.update(
+      { profilepic: `photos/${file.name}` },
+      { where: { id: req.user.id } }
+    );
 
     res.status(200).json({ success: "Image uploaded", data: file.name });
   });
@@ -256,27 +251,3 @@ const sendTokenResponse = (user, statusCode, res) => {
     UserToken: token,
   });
 };
-
-//
-//
-//
-//
-//
-//
-
-// @desc      Update password
-// @route     PUT /api/v1/auth/updatepassword
-// @access
-// exports.updatePassword = asyncHandler(async (req, res, next) => {
-//   const user = await User.findById(req.user.id).select('+password');
-
-//   // Check current password
-//   if (!(await user.matchPassword(req.body.currentPassword))) {
-//     return next(new ErrorResponse('Password is incorrect', 401));
-//   }
-
-//   user.password = req.body.newPassword;
-//   await user.save();
-
-//   sendTokenResponse(user, 200, res);
-// });
