@@ -18,7 +18,7 @@ var {
 } = require("../controllers/ngoController");
 
 //the default route for ngo
-ngoRouter.route("/").get(defNgo);
+ngoRouter.route("/").get(protect, defNgo);
 
 //adding ngo data into the database route
 ngoRouter.route("/add-ngo").post(protect, addNgo);
