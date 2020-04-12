@@ -11,7 +11,7 @@ const asyncHandler = require("../middlewares/async_handler");
 const Employee = require("../models/admin_models/emp");
 const EmpDepartment = require("../models/admin_models/emp_department");
 const User = require("../models/user_models/user");
-// const Ngo = require("../models/ngo_models/ngoData");
+const Ngo = require("../models/ngo_models/ngoData");
 
 //declaring an empty object to store and export the methods
 var empController = {};
@@ -236,52 +236,51 @@ empController.deleteUser = asyncHandler(async (req, res, next) => {
     .json({ success: "User Information Deleted", User: deleteUser });
 });
 
-// //@desc     displaying all the ngo data
-// //@route    GET /api/v1/admin/show/ngo
-// //@access   private
-// empController.showAllNgo = asyncHandler(async (req, res, next) => {
-//   let showAllNgo = await Ngo.find();
-//   res.status(200).json({
-//     success: "All Ngo data",
-//     count: showAllNgo.length,
-//     Ngos: showAllNgo,
-//   });
-// });
+//@desc     displaying all the ngo data
+//@route    GET /api/v1/admin/show/ngo
+//@access   private
+empController.showAllNgo = asyncHandler(async (req, res, next) => {
+  let showAllNgo = await Ngo.findAndCountAll();
+  res.status(200).json({
+    success: "All Ngo data",
+    Ngos: showAllNgo,
+  });
+});
 
-// // @desc    displaying one ngo data
-// // @route   GET /api/v1/admin/show/ngo/:id
-// //@access   private
-// empController.showOneNgo = asyncHandler(async (req, res, next) => {
-//   let showOneNgo = await Ngo.findById(req.params.id);
-//   if (!showOneNgo) {
-//     //if condition to check if id exsists or not the database
-//     return next(
-//       new ErrorResponse(
-//         `Document or Record not found with id:${req.params.id}. Check ID`,
-//         404
-//       )
-//     );
-//   }
-//   res.status(200).json({ success: "User Information", Ngo: showOneNgo });
-// });
+// @desc    displaying one ngo data
+// @route   GET /api/v1/admin/show/ngo/:id
+//@access   private
+empController.showOneNgo = asyncHandler(async (req, res, next) => {
+  let showOneNgo = await Ngo.findByPk(req.params.id);
+  if (!showOneNgo) {
+    //if condition to check if id exsists or not the database
+    return next(
+      new ErrorResponse(
+        `Document or Record not found with id:${req.params.id}. Check ID`,
+        404
+      )
+    );
+  }
+  res.status(200).json({ success: "User Information", Ngo: showOneNgo });
+});
 
-// //@desc     delete an user data
-// //@route    DELETE /api/v1/admin/delete/user/:id
-// //@access   private
-// empController.deleteNgo = asyncHandler(async (req, res, next) => {
-//   let deleteNgo = await Ngo.findById(req.params.id);
-//   if (!deleteNgo) {
-//     //if condition to check if id exsists or not the database
-//     return next(
-//       new ErrorResponse(
-//         `Document or Record not found with id:${req.params.id}. Check ID`,
-//         404
-//       )
-//     );
-//   }
-//   deleteNgo.remove();
-//   res.status(200).json({ success: "Ngo Deleted", Ngo: deleteNgo });
-// });
+//@desc     delete an user data
+//@route    DELETE /api/v1/admin/delete/user/:id
+//@access   private
+empController.deleteNgo = asyncHandler(async (req, res, next) => {
+  let deleteNgo = await Ngo.findByPk(req.params.id);
+  if (!deleteNgo) {
+    //if condition to check if id exsists or not the database
+    return next(
+      new ErrorResponse(
+        `Document or Record not found with id:${req.params.id}. Check ID`,
+        404
+      )
+    );
+  }
+  deleteNgo.destroy();
+  res.status(200).json({ success: "Ngo Deleted", Ngo: deleteNgo });
+});
 
 //exporting the module
 module.exports = empController;

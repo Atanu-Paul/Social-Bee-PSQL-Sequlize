@@ -39,7 +39,7 @@ const adminAuth = require("./routes/admin_auth_route");
 const user = require("./routes/user_Route");
 
 //importing the Ngo Related routes
-// const ngo = require("./routes/ngo_Routes");
+const ngo = require("./routes/ngo_Routes");
 
 //declaring the port variable
 const PORT = process.env.PORT || 8080;
@@ -60,24 +60,24 @@ app.use(express.urlencoded({ extended: false }));
 //file uploading middleware
 app.use(fileupload());
 
-//setting up the helmet middleware to add header security features
-// app.use(helmet());
+// setting up the helmet middleware to add header security features
+app.use(helmet());
 
-//setting up the xxs-clean middleware to prevent XSS attacks
-// app.use(xssClean());
+// setting up the xxs-clean middleware to prevent XSS attacks
+app.use(xssClean());
 
-//setting up the rate limiter middleware this will not allow more than 100 request in 10 mins to our api
-// const limiter = ratelimt({
-//   windowMs: 1060 * 1000, //10 mins
-//   max: 100,
-// });
-// app.use(limiter);
+// setting up the rate limiter middleware this will not allow more than 100 request in 10 mins to our api
+const limiter = ratelimt({
+  windowMs: 1060 * 1000, //10 mins
+  max: 100,
+});
+app.use(limiter);
 
-//setting up the hpp middleware that will prevent HTTP Parameter Pollution attacks
-// app.use(hpp());
+// setting up the hpp middleware that will prevent HTTP Parameter Pollution attacks
+app.use(hpp());
 
-//setting up the cors middleware to implement Search Results Cross-Origin Resource Sharing (CORS)
-// app.use(cors());
+// setting up the cors middleware to implement Search Results Cross-Origin Resource Sharing (CORS)
+app.use(cors());
 
 //custom logger middleaware not so important does exactly what morgan does but in rudamentry manner. I made it just for fun.
 app.use(logger);
@@ -85,7 +85,7 @@ app.use(logger);
 //mounting the route to a default path
 app.use("/api/v1/admin", admin, adminAuth);
 app.use("/api/v1/user", user);
-// app.use("/api/v1/ngo", ngo);
+app.use("/api/v1/ngo", ngo);
 
 //setting up the custom error handler have to put it after the routes in order to let javascript catch it
 app.use(errorHandler);

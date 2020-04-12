@@ -27,6 +27,8 @@ exports.register = asyncHandler(async (req, res, next) => {
   Phasellus ac lorem in nibh accumsan ultricies et euismod tellus. Morbi blandit et quam et rhoncus. Pellentesque scelerisque nunc non mi feugiat tempus.
   This is your username and pssword. Let's change the world together.
 
+  This is our Company Brouchre to give you a better idea about our Product ${process.env.DUMMY_PDF}
+
   Email:  ${email}
   Password:  ${password}
 

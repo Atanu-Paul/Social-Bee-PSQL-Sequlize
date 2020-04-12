@@ -1,4 +1,5 @@
 //imopting the required packages
+const { Op } = require("sequelize");
 const path = require("path");
 
 //importing the custom error response module
@@ -36,13 +37,9 @@ ngoController.addNgo = asyncHandler(async (req, res, next) => {
 //@route    GET /api/v1/ngo/show_ngo
 //@access   private
 ngoController.showAllngo = asyncHandler(async (req, res, next) => {
-  let showAllNgo = await NgoData.find().populate({
-    path: "user",
-    select: "name email",
-  });
+  let showAllNgo = await NgoData.findAndCountAll();
   res.status(200).json({
     success: "All Ngo data",
-    count: showAllNgo.length,
     Ngo_Details: showAllNgo,
   });
 });
@@ -51,13 +48,9 @@ ngoController.showAllngo = asyncHandler(async (req, res, next) => {
 //@route    GET /api/v1/ngo/show_ngo/:id
 //@access   private
 ngoController.showNgo = asyncHandler(async (req, res, next) => {
-  let showNgo = await NgoData.findById(req.params.id).populate({
-    path: "user",
-    select: "name email",
-  });
+  let showNgo = await NgoData.findByPk(req.params.id);
   res.status(200).json({
     success: "Ngo data",
-    count: showNgo.length,
     Ngo_Details: showNgo,
   });
 });
@@ -66,9 +59,8 @@ ngoController.showNgo = asyncHandler(async (req, res, next) => {
 //@route    PUT /api/v1/ngo/update/:id
 //@access   private
 ngoController.updateNgo = asyncHandler(async (req, res, next) => {
-  let updateNgo = await NgoData.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
+  let updateNgo = await NgoData.update(req.body, {
+    where: { id: req.params.id },
   });
   if (!updateNgo) {
     //if condition to check if id exsists or not the database
@@ -88,7 +80,7 @@ ngoController.updateNgo = asyncHandler(async (req, res, next) => {
 //@route    PUT /api/v1/ngo/:id/photo
 //@access   private
 ngoController.photoUpload = asyncHandler(async (req, res, next) => {
-  let ngo = await NgoData.findById(req.params.id);
+  let ngo = await NgoData.findByPk(req.params.id);
 
   //if condition to check if id exsists or not the database
   if (!ngo) {
@@ -126,7 +118,7 @@ ngoController.photoUpload = asyncHandler(async (req, res, next) => {
   }
 
   //creating a custom file name to stroe in databse so that nameing conflicts doesn't happen if 2 or more user upload the same image file.
-  file.name = `photo_${ngo._id}${path.parse(file.name).ext}`;
+  file.name = `photo_ngo_id_${ngo.id}${path.parse(file.name).ext}`;
 
   //uploading the file in the database
   file.mv(`${process.env.FILE_UPLOAD_PATH}/${file.name}`, async (err) => {
@@ -136,9 +128,11 @@ ngoController.photoUpload = asyncHandler(async (req, res, next) => {
         new ErrorResponse(`Server Error: File could not uploaded`, 500)
       );
     }
-    await NgoData.findByIdAndUpdate(req.params.id, {
-      ngoImg: `photos/${file.name}`,
-    });
+
+    await NgoData.update(
+      { ngoImg: `photos/${file.name}` },
+      { where: { id: req.params.id } }
+    );
 
     res.status(200).json({ success: "Image uploaded", data: file.name });
   });
@@ -148,7 +142,7 @@ ngoController.photoUpload = asyncHandler(async (req, res, next) => {
 //@route    DELETE /api/v1/ngo/delete/:id
 //@access   private
 ngoController.deleteNgo = asyncHandler(async (req, res, next) => {
-  let deleteNgo = await NgoData.findByIdAndDelete(req.params.id);
+  let deleteNgo = await NgoData.destroy({ where: { id: req.params.id } });
   if (!deleteNgo) {
     //if condition to check if id exsists or not the database
     return next(
@@ -167,10 +161,9 @@ ngoController.deleteNgo = asyncHandler(async (req, res, next) => {
 //@route    GET /api/v1/ngo/query
 //@access   private
 ngoController.showNgoQ = asyncHandler(async (req, res, next) => {
-  let showNgo = await NgoData.find(req.query);
+  let showNgo = await NgoData.findAndCountAll({ where: req.query });
   res.status(200).json({
     success: "Ngo data",
-    count: showNgo.length,
     Ngo_Details: showNgo,
   });
 });
@@ -180,6 +173,7 @@ ngoController.showNgoQ = asyncHandler(async (req, res, next) => {
 //@access   private
 ngoController.showNgoQSelectSort = asyncHandler(async (req, res, next) => {
   const reqQuery = { ...req.query };
+  // console.log(reqQuery)
 
   //field to exclude from the query
   const removeFileds = ["select", "sort"];
@@ -188,16 +182,13 @@ ngoController.showNgoQSelectSort = asyncHandler(async (req, res, next) => {
   removeFileds.forEach((param) => delete reqQuery[param]);
 
   //Select fileds query
-  if (req.query.select && req.query.sort) {
-    const fields = req.query.select.split(",").join(" ");
-    const sortBy = req.query.sort.split(",").join(" ");
-    query = NgoData.find().select(fields).sort(sortBy);
-  }
-
-  let showNgo = await query;
+  const fields = req.query.select.split(",");
+  const sortBy = req.query.sort.split(",");
+  var showNgo = await NgoData.findAndCountAll({ attributes: fields }, Op.or, {
+    order: sortBy,
+  });
   res.status(200).json({
     success: "Ngo data",
-    count: showNgo.length,
     Ngo_Details: showNgo,
   });
 });
@@ -220,10 +211,9 @@ ngoController.showNgoPageInit = asyncHandler(async (req, res, next) => {
   const startIndex = (page - 1) * limit;
   const lastIndex = page * limit;
 
-  query = NgoData.find().skip(startIndex).limit(limit);
+  let showNgo = await NgoData.findAll({ limit: limit, offset: startIndex });
 
-  let showNgo = await query;
-  const totalDoc = await NgoData.countDocuments();
+  const totalDoc = await NgoData.count();
 
   //page ination result
   const pageination = {};
